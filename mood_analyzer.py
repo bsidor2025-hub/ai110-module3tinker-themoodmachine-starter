@@ -9,9 +9,19 @@ This class starts with very simple logic:
   - Convert that score into a mood label
 """
 
+import re
+import string
 from typing import List, Dict, Tuple, Optional
 
 from dataset import POSITIVE_WORDS, NEGATIVE_WORDS
+
+# Irregular contractions that the generic "n't" rule would get wrong.
+CONTRACTIONS = {
+    "can't": "can not",
+    "cannot": "can not",
+    "won't": "will not",
+    "i'm": "i am",
+}
 
 
 class MoodAnalyzer:
@@ -40,20 +50,30 @@ class MoodAnalyzer:
         """
         Convert raw text into a list of tokens the model can work with.
 
-        TODO: Improve this method.
-
-        Right now, it does the minimum:
-          - Strips leading and trailing whitespace
-          - Converts everything to lowercase
-          - Splits on spaces
-
-        Ideas to improve:
-          - Remove punctuation
-          - Handle simple emojis separately (":)", ":-(", "🥲", "😂")
+        Steps:
+          - Strip whitespace and lowercase
+          - Expand contractions ("don't" -> "do not")
           - Normalize repeated characters ("soooo" -> "soo")
+          - Tokenize into words, dropping ASCII punctuation
+          - Keep emojis as separate tokens ("lol😂" -> "lol", "😂")
         """
         cleaned = text.strip().lower()
-        tokens = cleaned.split()
+
+        # Normalize curly apostrophes, then expand contractions so negation
+        # ("don't" -> "do not") is visible as its own token.
+        cleaned = cleaned.replace("’", "'")
+        for contraction, expanded in CONTRACTIONS.items():
+            cleaned = cleaned.replace(contraction, expanded)
+        cleaned = re.sub(r"n't\b", " not", cleaned)
+
+        # Squash 3+ repeated characters down to 2 ("soooo" -> "soo").
+        cleaned = re.sub(r"(.)\1{2,}", r"\1\1", cleaned)
+
+        # Words (letters, digits, inner apostrophes) stay together; every other
+        # non-space character becomes its own token. ASCII punctuation is then
+        # dropped, which leaves emojis and emoticon characters as tokens.
+        raw_tokens = re.findall(r"[a-z0-9]+(?:'[a-z]+)?|[^\sa-z0-9]", cleaned)
+        tokens = [t for t in raw_tokens if not (len(t) == 1 and t in string.punctuation)]
 
         return tokens
 
