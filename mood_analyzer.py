@@ -18,6 +18,11 @@ from dataset import POSITIVE_WORDS, NEGATIVE_WORDS
 NEGATORS = {"not", "no", "never"}
 NEGATION_WINDOW = 2  # how many tokens after a negator it can still flip a word
 
+# Emojis that flip a nearby negative word to positive ("she is so bad 🔥").
+POSITIVE_SLANG_MARKERS = {"🔥"}
+POSITIVE_SLANG_MARKERS_LABEL = "🔥"
+SLANG_WINDOW = 3  # max token distance (either direction) between word and marker
+
 # Irregular contractions that the generic "n't" rule would get wrong.
 CONTRACTIONS = {
     "can't": "can not",
@@ -117,7 +122,11 @@ class MoodAnalyzer:
         negator: Optional[str] = None
         since_negator = 0
 
-        for token in tokens:
+        # Positions of slang markers (e.g. 🔥) that turn nearby negative words
+        # positive: "she is so bad 🔥" -> "bad" means impressive.
+        marker_positions = [i for i, t in enumerate(tokens) if t in POSITIVE_SLANG_MARKERS]
+
+        for index, token in enumerate(tokens):
             if token in NEGATORS:
                 negator = token
                 since_negator = 0
@@ -129,7 +138,17 @@ class MoodAnalyzer:
             elif token in self.negative_words:
                 polarity = -1
 
-            if polarity != 0:
+            near_marker = any(
+                abs(index - pos) <= SLANG_WINDOW for pos in marker_positions
+            )
+
+            if polarity < 0 and near_marker:
+                # Slang override: a negative word near 🔥 counts as positive.
+                # It takes priority over negation, so "not bad 🔥" stays positive.
+                score += 1
+                positive_hits.append(f"{token} (near {POSITIVE_SLANG_MARKERS_LABEL})")
+                negator = None
+            elif polarity != 0:
                 label = token
                 if negator is not None and since_negator < NEGATION_WINDOW:
                     polarity = -polarity

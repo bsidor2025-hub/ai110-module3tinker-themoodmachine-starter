@@ -27,6 +27,7 @@ POSITIVE_WORDS = [
     "glad",
     "proud",
     "grateful",
+    "hopeful",
     # strong praise
     "wonderful",
     "fantastic",
@@ -37,6 +38,7 @@ POSITIVE_WORDS = [
     "dope",
     # emoji
     "😂",
+    "🔥",
 ]
 
 NEGATIVE_WORDS = [
@@ -82,7 +84,8 @@ SAMPLE_POSTS = [
     "I absolutely love getting stuck in traffic 🙃",
     "Great, another meeting that could have been an email 🙄",
     "Oh perfect, my phone died right before the exam 💀",
-    "bro might be cooked 💀"
+    "bro might be cooked 💀",
+    "she is so bad 🔥",
 ]
 
 # Human labels for each post above.
@@ -102,7 +105,8 @@ TRUE_LABELS = [
     "negative",  # "I absolutely love getting stuck in traffic 🙃" (sarcasm)
     "negative",  # "Great, another meeting that could have been an email 🙄" (sarcasm)
     "negative",  # "Oh perfect, my phone died right before the exam 💀" (sarcasm)
-    "neutral",  # "bro got cooked 💀"
+    "neutral",  # "bro might be cooked 💀"
+    "positive",  # "she is so bad 🔥" (slang: "bad" meaning impressive)
 ]
 
 # TODO: Add 5-10 more posts and labels.
