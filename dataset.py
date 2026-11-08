@@ -23,6 +23,20 @@ POSITIVE_WORDS = [
     "chill",
     "relaxed",
     "amazing",
+    # core
+    "glad",
+    "proud",
+    "grateful",
+    # strong praise
+    "wonderful",
+    "fantastic",
+    "perfect",
+    # slang
+    "hyped",
+    "stoked",
+    "dope",
+    # emoji
+    "😂",
 ]
 
 NEGATIVE_WORDS = [
@@ -36,6 +50,20 @@ NEGATIVE_WORDS = [
     "stressed",
     "hate",
     "boring",
+    # core
+    "annoyed",
+    "frustrated",
+    "anxious",
+    # strong dislike
+    "worst",
+    "horrible",
+    "sucks",
+    # slang
+    "meh",
+    "cringe",
+    "drained",
+    # emoji
+    "😭",
 ]
 
 # ---------------------------------------------------------------------
@@ -50,6 +78,11 @@ SAMPLE_POSTS = [
     "This is fine",
     "So excited for the weekend",
     "I am not happy about this",
+    "Lowkey stressed but kind of proud of myself",
+    "I absolutely love getting stuck in traffic 🙃",
+    "Great, another meeting that could have been an email 🙄",
+    "Oh perfect, my phone died right before the exam 💀",
+    "bro might be cooked 💀"
 ]
 
 # Human labels for each post above.
@@ -65,6 +98,11 @@ TRUE_LABELS = [
     "neutral",   # "This is fine"
     "positive",  # "So excited for the weekend"
     "negative",  # "I am not happy about this"
+    "mixed",  # "Lowkey stressed but kind of proud of myself"
+    "negative",  # "I absolutely love getting stuck in traffic 🙃" (sarcasm)
+    "negative",  # "Great, another meeting that could have been an email 🙄" (sarcasm)
+    "negative",  # "Oh perfect, my phone died right before the exam 💀" (sarcasm)
+    "neutral",  # "bro got cooked 💀"
 ]
 
 # TODO: Add 5-10 more posts and labels.
@@ -91,4 +129,4 @@ TRUE_LABELS = [
 # TRUE_LABELS.append("mixed")
 #
 # Remember to keep them aligned:
-#   len(SAMPLE_POSTS) == len(TRUE_LABELS)
+print(len(SAMPLE_POSTS) == len(TRUE_LABELS))
