@@ -15,6 +15,9 @@ from typing import List, Dict, Tuple, Optional
 
 from dataset import POSITIVE_WORDS, NEGATIVE_WORDS
 
+NEGATORS = {"not", "no", "never"}
+NEGATION_WINDOW = 2  # how many tokens after a negator it can still flip a word
+
 # Irregular contractions that the generic "n't" rule would get wrong.
 CONTRACTIONS = {
     "can't": "can not",
@@ -95,15 +98,51 @@ class MoodAnalyzer:
           - Give some words higher weights than others (for example "hate" < "annoyed")
           - Treat emojis or slang (":)", "lol", "💀") as strong signals
         """
-        # TODO: Implement this method.
-        #   1. Call self.preprocess(text) to get tokens.
-        #   2. Loop over the tokens.
-        #   3. Increase the score for positive words, decrease for negative words.
-        #   4. Return the total score.
-        #
-        # Hint: if you implement negation, you may want to look at pairs of tokens,
-        # like ("not", "happy") or ("never", "fun").
-        pass
+        score, _, _ = self._analyze(text)
+        return score
+
+    def _analyze(self, text: str) -> Tuple[int, List[str], List[str]]:
+        """
+        Shared scoring logic used by score_text, predict_label and explain.
+
+        Returns (score, positive_hits, negative_hits). A negator ("not", "no",
+        "never") flips the polarity of the next sentiment word if it appears
+        within NEGATION_WINDOW tokens, e.g. "not happy" counts as negative.
+        Negated hits are recorded with their negator, e.g. "not happy".
+        """
+        tokens = self.preprocess(text)
+        positive_hits: List[str] = []
+        negative_hits: List[str] = []
+        score = 0
+        negator: Optional[str] = None
+        since_negator = 0
+
+        for token in tokens:
+            if token in NEGATORS:
+                negator = token
+                since_negator = 0
+                continue
+
+            polarity = 0
+            if token in self.positive_words:
+                polarity = 1
+            elif token in self.negative_words:
+                polarity = -1
+
+            if polarity != 0:
+                label = token
+                if negator is not None and since_negator < NEGATION_WINDOW:
+                    polarity = -polarity
+                    label = f"{negator} {token}"
+                    negator = None
+                score += polarity
+                (positive_hits if polarity > 0 else negative_hits).append(label)
+            elif negator is not None:
+                since_negator += 1
+                if since_negator >= NEGATION_WINDOW:
+                    negator = None
+
+        return score, positive_hits, negative_hits
 
     # ---------------------------------------------------------------------
     # Label prediction
@@ -125,12 +164,16 @@ class MoodAnalyzer:
         Just remember that whatever labels you return should match the labels
         you use in TRUE_LABELS in dataset.py if you care about accuracy.
         """
-        # TODO: Implement this method.
-        #   1. Call self.score_text(text) to get the numeric score.
-        #   2. Return "positive" if the score is above 0.
-        #   3. Return "negative" if the score is below 0.
-        #   4. Return "neutral" otherwise.
-        pass
+        score, positive_hits, negative_hits = self._analyze(text)
+
+        # Both kinds of signal present -> mixed, even if they cancel out.
+        if positive_hits and negative_hits:
+            return "mixed"
+        if score > 0:
+            return "positive"
+        if score < 0:
+            return "negative"
+        return "neutral"
 
     # ---------------------------------------------------------------------
     # Explanations (optional but recommended)
@@ -152,19 +195,7 @@ class MoodAnalyzer:
         The current implementation is a placeholder so the code runs even
         before you implement it.
         """
-        tokens = self.preprocess(text)
-
-        positive_hits: List[str] = []
-        negative_hits: List[str] = []
-        score = 0
-
-        for token in tokens:
-            if token in self.positive_words:
-                positive_hits.append(token)
-                score += 1
-            if token in self.negative_words:
-                negative_hits.append(token)
-                score -= 1
+        score, positive_hits, negative_hits = self._analyze(text)
 
         return (
             f"Score = {score} "
